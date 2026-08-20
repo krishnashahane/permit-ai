@@ -1,0 +1,80 @@
+{
+  "id": "springfield",
+  "name": "City of Springfield (sample jurisdiction)",
+  "version": "2024.1",
+  "effectiveDate": "2024-01-01",
+  "zones": {
+    "R-1": {
+      "description": "Single-Family Residential, low density",
+      "minLotAreaSqFt": 6000,
+      "minLotWidthFt": 60,
+      "maxHeightFt": 35,
+      "maxStories": 2,
+      "minFrontSetbackFt": 20,
+      "minRearSetbackFt": 20,
+      "minSideSetbackFt": 6,
+      "maxFar": 0.5,
+      "minParkingPerUnit": 2,
+      "codeSections": {
+        "lotArea": "Zoning Code §12.2(a)",
+        "lotWidth": "Zoning Code §12.2(b)",
+        "height": "Zoning Code §12.3",
+        "frontSetback": "Zoning Code §12.4(a)",
+        "rearSetback": "Zoning Code §12.4(b)",
+        "sideSetback": "Zoning Code §12.4(c)",
+        "far": "Zoning Code §12.5",
+        "parking": "Zoning Code §12.8"
+      }
+    },
+    "R-2": {
+      "description": "Two-Family / Low-rise Multi-Family Residential",
+      "minLotAreaSqFt": 5000,
+      "minLotWidthFt": 50,
+      "maxHeightFt": 40,
+      "maxStories": 3,
+      "minFrontSetbackFt": 15,
+      "minRearSetbackFt": 15,
+      "minSideSetbackFt": 5,
+      "maxFar": 0.75,
+      "minParkingPerUnit": 1.5,
+      "codeSections": {
+        "lotArea": "Zoning Code §13.2(a)",
+        "lotWidth": "Zoning Code §13.2(b)",
+        "height": "Zoning Code §13.3",
+        "frontSetback": "Zoning Code §13.4(a)",
+        "rearSetback": "Zoning Code §13.4(b)",
+        "sideSetback": "Zoning Code §13.4(c)",
+        "far": "Zoning Code §13.5",
+        "parking": "Zoning Code §13.8"
+      }
+    },
+    "C-1": {
+      "description": "Neighborhood Commercial",
+      "minLotAreaSqFt": 4000,
+      "minLotWidthFt": 40,
+      "maxHeightFt": 55,
+      "maxStories": 4,
+      "minFrontSetbackFt": 10,
+      "minRearSetbackFt": 10,
+      "minSideSetbackFt": 0,
+      "maxFar": 2.0,
+      "minParkingPerUnit": 3,
+      "codeSections": {
+        "lotArea": "Zoning Code §14.2(a)",
+        "lotWidth": "Zoning Code §14.2(b)",
+        "height": "Zoning Code §14.3",
+        "frontSetback": "Zoning Code §14.4(a)",
+        "rearSetback": "Zoning Code §14.4(b)",
+        "sideSetback": "Zoning Code §14.4(c)",
+        "far": "Zoning Code §14.5",
+        "parking": "Zoning Code §14.8"
+      }
+    }
+  },
+  "building": {
+    "minEgressWidthIn": 32,
+    "minFireSeparationFt": 5,
+    "egressCodeSection": "IBC §1010.1.1 / IRC §R311.2",
+    "fireCodeSection": "IBC §705.8 / IRC §R302.1"
+  }
+}
