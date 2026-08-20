@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { randomUUID } from 'crypto';
 import { runRulesEngine, getJurisdiction } from '@/lib/rules/engine';
 import { getSeed } from '@/lib/seed';
-import { extractFacts, type PlanImage } from '@/lib/extract/vision';
+import { analyzeDocuments, type DocInput } from '@/lib/extract/vision';
 import { validateUpload, scanForMalware } from '@/lib/security/validate';
 import { rateLimit, clientKey } from '@/lib/security/ratelimit';
 import { resolveRole } from '@/lib/auth/rbac';
@@ -50,9 +50,12 @@ export async function POST(req: Request) {
         projectDescription = sanitizeDocumentText(String(body.description || '')).clean;
         owner = String(body.owner || '');
         address = String(body.address || '');
-        if (!body.facts) return NextResponse.json({ error: 'Missing facts.' }, { status: 400 });
-        facts = await extractFacts(projectDescription, []); // baseline, then overlay edits
-        facts = { ...facts, ...body.facts };
+        // Re-run after edits: the caller supplies the complete, already-extracted
+        // facts. We never synthesize data here.
+        if (!body.facts || typeof body.facts.zoneType !== 'string') {
+          return NextResponse.json({ error: 'Missing or invalid facts for re-run.' }, { status: 400 });
+        }
+        facts = { ...body.facts };
         facts.far = facts.lotAreaSqFt > 0 ? +(facts.floorAreaSqFt / facts.lotAreaSqFt).toFixed(3) : 0;
         facts._source = 'manual';
       }
@@ -72,22 +75,30 @@ export async function POST(req: Request) {
       if (files.length > 5) return NextResponse.json({ error: 'Too many files (maximum 5).' }, { status: 400 });
       const totalBytes = files.reduce((n, f) => n + f.size, 0);
       if (totalBytes > 60 * 1024 * 1024) return NextResponse.json({ error: 'Upload too large (60 MB total maximum).' }, { status: 413 });
-      const images: PlanImage[] = [];
+      if (files.length === 0) return NextResponse.json({ error: 'No document uploaded.' }, { status: 400 });
+      const docs: DocInput[] = [];
       for (const file of files) {
         const bytes = new Uint8Array(await file.arrayBuffer());
         const v = validateUpload(file.type, bytes);
         if (!v.ok) return NextResponse.json({ error: v.reason }, { status: 400 });
         const scan = await scanForMalware(bytes);
         if (!scan.ok) return NextResponse.json({ error: scan.reason }, { status: 400 });
-        // PDFs are passed to vision as-is via base64; images likewise.
-        if (v.detectedMime !== 'application/pdf') {
-          images.push({ base64: Buffer.from(bytes).toString('base64'), mediaType: v.detectedMime! });
-        }
+        // Both PDFs and images are sent to the vision model (as file / image parts).
+        docs.push({ base64: Buffer.from(bytes).toString('base64'), mediaType: v.detectedMime! });
       }
       if (!getJurisdiction(jurisdiction)) {
         return NextResponse.json({ error: 'Unknown jurisdiction.' }, { status: 400 });
       }
-      facts = await extractFacts(projectDescription, images);
+      // Classify + extract. Refuse to produce a verdict for non-building
+      // documents or when too little real data can be read — no fabrication.
+      const outcome = await analyzeDocuments(projectDescription, docs);
+      if (!outcome.ok) {
+        return NextResponse.json(
+          { error: outcome.message, code: outcome.code, documentType: outcome.documentType, missing: outcome.missing },
+          { status: outcome.code === 'ai_unavailable' ? 503 : 422 },
+        );
+      }
+      facts = outcome.facts;
     } else {
       return NextResponse.json({ error: 'Unsupported content type.' }, { status: 415 });
     }

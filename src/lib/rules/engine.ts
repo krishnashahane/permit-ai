@@ -70,6 +70,21 @@ interface RuleDef {
   cost: string;
   time: string;
   effort: number;
+  field: string;        // the ExtractedFacts key this rule reads
+}
+
+// A parameter that could not be read from the documents is reported as
+// "not assessed" — never a fabricated pass or fail.
+function notAssessed(r: RuleDef): RuleCheck {
+  return {
+    id: r.id, label: r.label, category: r.category, status: 'review', severity: 'low',
+    measured: 'not found in documents',
+    required: `${r.comparator === '>=' ? '≥' : '≤'} ${fmt(r.required, r.unit)}`,
+    measuredValue: null, requiredValue: r.required, comparator: r.comparator, unit: r.unit,
+    difference: null, nearLimit: false, codeSection: r.codeSection,
+    fixSuggestion: 'This value was not present in the submitted plans. Provide it to complete the check.',
+    fixEffort: 1,
+  };
 }
 
 function evalRule(r: RuleDef): RuleCheck {
@@ -143,20 +158,25 @@ export function runRulesEngine(
   const reqParking = Math.ceil(facts.dwellingUnits * zone.minParkingPerUnit) || zone.minParkingPerUnit;
 
   const defs: RuleDef[] = [
-    { id: 'lot-area', label: 'Lot area', category: 'zoning', comparator: '>=', measured: facts.lotAreaSqFt, required: zone.minLotAreaSqFt, unit: 'sq ft', codeSection: cs.lotArea, fix: 'Lot area is below the district minimum; a lot-size variance or a smaller footprint is required.', cost: '$2,000–$6,000', time: '6–12 weeks', effort: 5 },
-    { id: 'lot-width', label: 'Lot width', category: 'zoning', comparator: '>=', measured: facts.lotWidthFt, required: zone.minLotWidthFt, unit: 'ft', codeSection: cs.lotWidth, fix: 'Lot width is under the minimum frontage; consider a variance or lot-line adjustment.', cost: '$2,000–$5,000', time: '6–10 weeks', effort: 5 },
-    { id: 'height', label: 'Building height', category: 'height', comparator: '<=', measured: facts.buildingHeightFt, required: zone.maxHeightFt, unit: 'ft', codeSection: cs.height, fix: 'Reduce overall height (lower plate height or roof pitch) to meet the district cap.', cost: '$5,000–$25,000', time: '2–4 weeks', effort: 4 },
-    { id: 'stories', label: 'Stories', category: 'height', comparator: '<=', measured: facts.stories, required: zone.maxStories, unit: '', codeSection: cs.height, fix: 'Remove or reclassify a story, or seek a height/story variance.', cost: '$10,000–$40,000', time: '3–6 weeks', effort: 4 },
-    { id: 'front-setback', label: 'Front setback', category: 'setbacks', comparator: '>=', measured: facts.frontSetbackFt, required: zone.minFrontSetbackFt, unit: 'ft', codeSection: cs.frontSetback, fix: 'Shift the building envelope back from the front lot line to meet the required setback.', cost: '$3,000–$12,000', time: '1–3 weeks', effort: 3 },
-    { id: 'rear-setback', label: 'Rear setback', category: 'setbacks', comparator: '>=', measured: facts.rearSetbackFt, required: zone.minRearSetbackFt, unit: 'ft', codeSection: cs.rearSetback, fix: 'Increase distance between the structure and the rear lot line, or reduce the rear footprint.', cost: '$2,000–$9,000', time: '1–2 weeks', effort: 2 },
-    { id: 'side-setback', label: 'Side setback', category: 'setbacks', comparator: '>=', measured: facts.sideSetbackFt, required: zone.minSideSetbackFt, unit: 'ft', codeSection: cs.sideSetback, fix: 'Narrow the structure or shift it to restore the required side-yard clearance.', cost: '$2,000–$8,000', time: '1–2 weeks', effort: 2 },
-    { id: 'far', label: 'Floor Area Ratio (FAR)', category: 'far', comparator: '<=', measured: facts.far, required: zone.maxFar, unit: '', codeSection: cs.far, fix: 'Reduce gross floor area or increase lot area so FAR falls within the district maximum.', cost: '$4,000–$20,000', time: '2–4 weeks', effort: 4 },
-    { id: 'parking', label: 'Off-street parking', category: 'parking', comparator: '>=', measured: facts.parkingSpaces, required: reqParking, unit: 'spaces', codeSection: cs.parking, fix: `Provide at least ${reqParking} off-street space(s) (${zone.minParkingPerUnit}/unit), or apply for a parking reduction.`, cost: '$5,000–$15,000/space', time: '2–5 weeks', effort: 3 },
-    { id: 'egress', label: 'Egress clear width', category: 'egress', comparator: '>=', measured: facts.egressWidthIn, required: j.building.minEgressWidthIn, unit: 'in', codeSection: j.building.egressCodeSection, fix: 'Widen the required egress door/path to the code minimum clear width.', cost: '$1,500–$6,000/opening', time: '1–2 weeks', effort: 2 },
-    { id: 'fire-separation', label: 'Fire separation distance', category: 'fire', comparator: '>=', measured: facts.fireSeparationDistanceFt, required: j.building.minFireSeparationFt, unit: 'ft', codeSection: j.building.fireCodeSection, fix: 'Increase distance to the property line, or add a rated wall assembly and limit openings.', cost: '$3,000–$18,000', time: '2–4 weeks', effort: 3 },
+    { id: 'lot-area', label: 'Lot area', category: 'zoning', comparator: '>=', measured: facts.lotAreaSqFt, required: zone.minLotAreaSqFt, unit: 'sq ft', codeSection: cs.lotArea, fix: 'Lot area is below the district minimum; a lot-size variance or a smaller footprint is required.', cost: '$2,000–$6,000', time: '6–12 weeks', effort: 5, field: 'lotAreaSqFt' },
+    { id: 'lot-width', label: 'Lot width', category: 'zoning', comparator: '>=', measured: facts.lotWidthFt, required: zone.minLotWidthFt, unit: 'ft', codeSection: cs.lotWidth, fix: 'Lot width is under the minimum frontage; consider a variance or lot-line adjustment.', cost: '$2,000–$5,000', time: '6–10 weeks', effort: 5, field: 'lotWidthFt' },
+    { id: 'height', label: 'Building height', category: 'height', comparator: '<=', measured: facts.buildingHeightFt, required: zone.maxHeightFt, unit: 'ft', codeSection: cs.height, fix: 'Reduce overall height (lower plate height or roof pitch) to meet the district cap.', cost: '$5,000–$25,000', time: '2–4 weeks', effort: 4, field: 'buildingHeightFt' },
+    { id: 'stories', label: 'Stories', category: 'height', comparator: '<=', measured: facts.stories, required: zone.maxStories, unit: '', codeSection: cs.height, fix: 'Remove or reclassify a story, or seek a height/story variance.', cost: '$10,000–$40,000', time: '3–6 weeks', effort: 4, field: 'stories' },
+    { id: 'front-setback', label: 'Front setback', category: 'setbacks', comparator: '>=', measured: facts.frontSetbackFt, required: zone.minFrontSetbackFt, unit: 'ft', codeSection: cs.frontSetback, fix: 'Shift the building envelope back from the front lot line to meet the required setback.', cost: '$3,000–$12,000', time: '1–3 weeks', effort: 3, field: 'frontSetbackFt' },
+    { id: 'rear-setback', label: 'Rear setback', category: 'setbacks', comparator: '>=', measured: facts.rearSetbackFt, required: zone.minRearSetbackFt, unit: 'ft', codeSection: cs.rearSetback, fix: 'Increase distance between the structure and the rear lot line, or reduce the rear footprint.', cost: '$2,000–$9,000', time: '1–2 weeks', effort: 2, field: 'rearSetbackFt' },
+    { id: 'side-setback', label: 'Side setback', category: 'setbacks', comparator: '>=', measured: facts.sideSetbackFt, required: zone.minSideSetbackFt, unit: 'ft', codeSection: cs.sideSetback, fix: 'Narrow the structure or shift it to restore the required side-yard clearance.', cost: '$2,000–$8,000', time: '1–2 weeks', effort: 2, field: 'sideSetbackFt' },
+    { id: 'far', label: 'Floor Area Ratio (FAR)', category: 'far', comparator: '<=', measured: facts.far, required: zone.maxFar, unit: '', codeSection: cs.far, fix: 'Reduce gross floor area or increase lot area so FAR falls within the district maximum.', cost: '$4,000–$20,000', time: '2–4 weeks', effort: 4, field: 'floorAreaSqFt' },
+    { id: 'parking', label: 'Off-street parking', category: 'parking', comparator: '>=', measured: facts.parkingSpaces, required: reqParking, unit: 'spaces', codeSection: cs.parking, fix: `Provide at least ${reqParking} off-street space(s) (${zone.minParkingPerUnit}/unit), or apply for a parking reduction.`, cost: '$5,000–$15,000/space', time: '2–5 weeks', effort: 3, field: 'parkingSpaces' },
+    { id: 'egress', label: 'Egress clear width', category: 'egress', comparator: '>=', measured: facts.egressWidthIn, required: j.building.minEgressWidthIn, unit: 'in', codeSection: j.building.egressCodeSection, fix: 'Widen the required egress door/path to the code minimum clear width.', cost: '$1,500–$6,000/opening', time: '1–2 weeks', effort: 2, field: 'egressWidthIn' },
+    { id: 'fire-separation', label: 'Fire separation distance', category: 'fire', comparator: '>=', measured: facts.fireSeparationDistanceFt, required: j.building.minFireSeparationFt, unit: 'ft', codeSection: j.building.fireCodeSection, fix: 'Increase distance to the property line, or add a rated wall assembly and limit openings.', cost: '$3,000–$18,000', time: '2–4 weeks', effort: 3, field: 'fireSeparationDistanceFt' },
   ];
 
-  for (const d of defs) checks.push(evalRule(d));
+  const missing = new Set(facts._missing ?? []);
+  for (const d of defs) {
+    // FAR needs both floor area and lot area; treat as not-assessed if either is missing.
+    const farMissing = d.id === 'far' && (missing.has('floorAreaSqFt') || missing.has('lotAreaSqFt'));
+    checks.push(missing.has(d.field) || farMissing ? notAssessed(d) : evalRule(d));
+  }
 
   // Qualitative accessible-route item is deferred to the RAG reasoning layer.
   checks.push({

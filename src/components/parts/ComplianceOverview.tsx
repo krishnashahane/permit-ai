@@ -7,6 +7,7 @@ import { Score, Bar } from '@/components/shared';
 export default function ComplianceOverview({ verdict }: { verdict: Verdict }) {
   const pass = verdict.verdict === 'PASS';
   const s = verdict.summary;
+  const notAssessed = verdict.checks.filter((c) => c.measured === 'not found in documents').length;
   return (
     <section className="fadeup">
       <div className="grid gap-10 lg:grid-cols-[minmax(0,320px)_1fr] lg:gap-14">
@@ -15,7 +16,8 @@ export default function ComplianceOverview({ verdict }: { verdict: Verdict }) {
           <h1 className={`mt-1 text-3xl font-semibold ${pass ? 'text-success' : 'text-danger'}`}>{pass ? 'Ready to submit' : 'Not ready'}</h1>
           <div className="mt-6"><Score score={verdict.readinessScore} /></div>
           <p className="mt-3 text-sm text-ink2">{verdict.rulesEvaluated} rules evaluated · {verdict.elapsedMs} ms</p>
-          <p className="text-meta text-ink3">{verdict.assessmentId}</p>
+          {notAssessed > 0 && <p className="mt-1 text-sm text-warning">{notAssessed} parameter{notAssessed > 1 ? 's' : ''} not found in documents — not assessed</p>}
+          <p className="mt-1 text-meta text-ink3">{verdict.assessmentId}</p>
 
           <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm">
             <Breakdown n={s.passed} label="Passed" c="#2f8f52" />

@@ -34,6 +34,11 @@ export interface ExtractedFacts {
   accessibleRoute: boolean | null; // qualitative — may be null / for RAG review
   _source: 'baseline' | 'vision' | 'manual' | 'sample';
   _notes?: string;
+  // Fact keys that could NOT be read from the submitted documents. The engine
+  // marks these rules "not assessed" rather than fabricating a pass/fail.
+  _missing?: string[];
+  _documentType?: string;  // what the extractor identified the upload as
+  _confidence?: number;    // overall extraction confidence 0..1
   // Per-parameter provenance. Present on SAMPLE projects and on real vision
   // extraction; absent on baseline. Never fabricated for real uploads.
   _meta?: Partial<Record<keyof ExtractedFactsNumeric, ParamMeta>>;

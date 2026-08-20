@@ -51,8 +51,13 @@ export interface VisionPart {
   image: string; // base64 (no data: prefix needed) or data URL
   mediaType: string;
 }
+export interface FilePart {
+  type: 'file';
+  data: string; // base64
+  mediaType: string; // e.g. application/pdf
+}
 type TextPart = { type: 'text'; text: string };
-type Part = TextPart | VisionPart;
+type Part = TextPart | VisionPart | FilePart;
 
 /** generateText wrapper. Returns null when AI is unavailable or on any error. */
 export async function complete(
@@ -68,7 +73,9 @@ export async function complete(
     const content = parts.map((p) =>
       p.type === 'text'
         ? { type: 'text' as const, text: p.text }
-        : { type: 'image' as const, image: p.image, mediaType: p.mediaType },
+        : p.type === 'file'
+          ? { type: 'file' as const, data: p.data, mediaType: p.mediaType }
+          : { type: 'image' as const, image: p.image, mediaType: p.mediaType },
     );
     const res = await generateText({
       model: model as never,
