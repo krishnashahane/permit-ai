@@ -25,7 +25,7 @@ export default function RegulationsUsed({ jurisdictionId, usedSections }: { juri
         {data.sources.map((s) => {
           const applied = usedSections.some((u) => u.includes(s.citation.split(' ')[0]) || s.citation.includes(u.split(' ')[0]));
           return (
-            <div key={s.citation} className="flex items-baseline justify-between gap-4 py-2.5">
+            <div key={s.citation} title={`${s.citation} — ${s.title}`} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 py-2.5">
               <div className="min-w-0">
                 <span className="text-sm font-medium text-ink">{s.citation}</span>
                 <span className="ml-2 text-sm text-ink2">{s.title}</span>

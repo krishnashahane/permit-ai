@@ -1,4 +1,5 @@
 import type { Role } from '@/lib/types';
+import { readCookie, verifyRoleToken, SESSION_COOKIE } from './session';
 
 // Role-based access control. Demo auth reads a role header/cookie; a real
 // deployment swaps `resolveRole` for a session/JWT check (Clerk, Auth0, etc.).
@@ -45,7 +46,10 @@ export function capabilitiesFor(role: Role): Capabilities {
   return MATRIX[role] ?? MATRIX.applicant;
 }
 
+// Authoritative role resolution. A role is granted ONLY by a valid HMAC-signed
+// session cookie (issued by /api/session after any required access code). The
+// legacy `x-permit-role` header is deliberately NOT trusted — client state
+// cannot escalate privilege. Absent/invalid session ⇒ least-privilege applicant.
 export function resolveRole(req: Request): Role {
-  const raw = (req.headers.get('x-permit-role') || '').toLowerCase();
-  return (ROLES as string[]).includes(raw) ? (raw as Role) : 'applicant';
+  return verifyRoleToken(readCookie(req, SESSION_COOKIE)) ?? 'applicant';
 }

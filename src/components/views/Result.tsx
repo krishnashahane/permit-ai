@@ -7,7 +7,7 @@ import ExtractedParams from '@/components/parts/ExtractedParams';
 import ViolationCard from '@/components/parts/ViolationCard';
 import RegulationsUsed from '@/components/parts/RegulationsUsed';
 import PlanPreview from '@/components/parts/PlanPreview';
-import { SectionHeading, Disclaimer } from '@/components/shared';
+import { SectionHeading } from '@/components/shared';
 
 export type VerdictResp = Verdict & {
   meta: { role: string; ownerMasked: string; addressMasked: string; piiEncryptedAtRest: boolean };
@@ -104,8 +104,6 @@ export default function Result({
           <div><SectionHeading title="Audit trail" description="Append-only, hash-chained — tamper-evident" /><AuditPanel verdict={verdict} /></div>
         </div>
       </div>
-
-      <div><hr className="divider mb-6" /><Disclaimer /></div>
     </div>
   );
 }

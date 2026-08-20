@@ -38,7 +38,7 @@ export default function PlanPreview({ issues, onSelect }: { issues: RuleCheck[];
       </div>
       <div className="mt-4 grid gap-x-8 gap-y-1 sm:grid-cols-2">
         {issues.map((c, i) => (
-          <button key={c.id} onClick={() => onSelect(c.id)} className="flex items-center gap-2.5 border-b border-line py-2 text-left text-sm hover:text-accent">
+          <button key={c.id} onClick={() => onSelect(c.id)} title={`${c.label} — ${c.codeSection}`} className="flex items-center gap-2.5 border-b border-line py-2 text-left text-sm hover:text-accent">
             <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-meta font-semibold text-white" style={{ background: c.status === 'fail' ? '#c8443a' : c.status === 'review' ? '#3f6ea6' : '#b5730c' }}>{i + 1}</span>
             <span className="truncate text-ink">{c.label}</span>
           </button>

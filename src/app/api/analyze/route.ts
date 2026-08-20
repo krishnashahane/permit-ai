@@ -65,8 +65,15 @@ export async function POST(req: Request) {
       address = String(form.get('address') || '');
 
       const files = form.getAll('files').filter((f): f is File => f instanceof File);
+      // Server-side limits (never trust the client): max 5 files, 25 MB each,
+      // 60 MB total. Reject rather than silently truncate. Uploaded filenames
+      // are NEVER used as a filesystem path — bytes are read in-memory and
+      // passed to extraction as base64, so path traversal is not reachable.
+      if (files.length > 5) return NextResponse.json({ error: 'Too many files (maximum 5).' }, { status: 400 });
+      const totalBytes = files.reduce((n, f) => n + f.size, 0);
+      if (totalBytes > 60 * 1024 * 1024) return NextResponse.json({ error: 'Upload too large (60 MB total maximum).' }, { status: 413 });
       const images: PlanImage[] = [];
-      for (const file of files.slice(0, 5)) {
+      for (const file of files) {
         const bytes = new Uint8Array(await file.arrayBuffer());
         const v = validateUpload(file.type, bytes);
         if (!v.ok) return NextResponse.json({ error: v.reason }, { status: 400 });

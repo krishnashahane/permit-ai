@@ -53,7 +53,7 @@ export default function Home({ meta, onStart, onSample }: { meta: Meta | null; o
         </div>
         <div className="mt-8 divide-y divide-line border-t border-line">
           {(meta?.seeds || []).map((s) => (
-            <button key={s.id} onClick={() => onSample(s.id)} className="group flex w-full items-center justify-between gap-6 py-5 text-left">
+            <button key={s.id} onClick={() => onSample(s.id)} title={s.description} className="group flex w-full items-center justify-between gap-6 py-5 text-left">
               <div className="min-w-0">
                 <div className="text-lg font-medium text-ink group-hover:text-accent">{s.label}</div>
                 <div className="mt-0.5 truncate text-sm text-ink2">{s.description}</div>
