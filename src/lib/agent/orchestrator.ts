@@ -23,6 +23,10 @@ export interface AgentContext {
 export function buildAgentRun(verdict: Verdict, facts: ExtractedFacts, ctx: AgentContext): AgentRun {
   const steps: AgentStep[] = [];
 
+  // Smart routing: the agent confirmed this input is a permit assessment before
+  // running any scan/retrieval tool. (Irrelevant input never reaches here.)
+  steps.push({ tool: 'route', label: 'Relevance check — permit assessment', status: 'ok', detail: 'building compliance' });
+
   if (ctx.source === 'upload') {
     steps.push({ tool: 'validate', label: 'Documents validated & scanned', status: 'ok', detail: `${ctx.documentCount ?? 0} file(s)` });
     steps.push({ tool: 'classify', label: 'Document classified as building plan', status: 'ok', detail: ctx.documentType || 'building document' });

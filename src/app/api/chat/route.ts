@@ -3,6 +3,7 @@ import { retrieve, toCitations } from '@/lib/rag/retrieve';
 import { aiEnabled, complete } from '@/lib/llm/client';
 import { sanitizeDocumentText } from '@/lib/extract/sanitize';
 import { rateLimit, clientKey } from '@/lib/security/ratelimit';
+import { classifyRelevance } from '@/lib/agent/relevance';
 import type { RuleCheck } from '@/lib/types';
 
 export const runtime = 'nodejs';
@@ -25,6 +26,20 @@ export async function POST(req: Request) {
   const question = sanitizeDocumentText(String(body.question || '')).clean.slice(0, 500);
   const check: RuleCheck | undefined = body.check;
   if (!question) return NextResponse.json({ error: 'Empty question.' }, { status: 400 });
+
+  // SMART ROUTING (server-enforced): only run the retrieval pipeline when the
+  // query is actually about a building-permit assessment. Off-topic input is
+  // answered conversationally with NO retrieval, scan, or rule evaluation.
+  const relevance = classifyRelevance(question, Boolean(check));
+  if (!relevance.relevant) {
+    return NextResponse.json({
+      answer: "I'm the PermitAI compliance assistant — I can only help with building-permit topics like zoning, setbacks, height, FAR, parking, egress, fire separation, or this assessment's findings. Ask me one of those and I'll cite the exact code.",
+      citations: [],
+      grounded: true,
+      offTopic: true,
+      routed: relevance.reason,
+    });
+  }
 
   const query = check ? `${check.label} ${check.category} ${question}` : question;
   const chunks = retrieve(query, { category: check?.category, k: 4 });

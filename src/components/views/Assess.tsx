@@ -30,17 +30,17 @@ export default function Assess({ meta, onRun, error }: { meta: Meta | null; onRu
           <p className="text-meta text-ink3">Step {step + 1} of {STEPS.length}</p>
         </div>
         <div className="mt-3 flex gap-1.5">
-          {STEPS.map((_, i) => <div key={i} className={`h-0.5 flex-1 rounded-full ${i <= step ? 'bg-accent' : 'bg-line2'}`} />)}
+          {STEPS.map((_, i) => <div key={i} className={`h-0.5 flex-1 rounded-full transition-colors duration-500 ${i <= step ? 'bg-accent' : 'bg-line2'}`} />)}
         </div>
       </div>
 
       {step === 0 && (
-        <div className="fade">
+        <div className="fadeup">
           <H t="Upload building plans" s="PDF, PNG or JPG, up to 25 MB each. Files are validated and malware-scanned server-side before parsing." />
           <div
             onDragOver={(e) => { e.preventDefault(); setDragOver(true); }} onDragLeave={() => setDragOver(false)}
             onDrop={(e) => { e.preventDefault(); setDragOver(false); addFiles(e.dataTransfer.files); }}
-            className={`flex min-h-[200px] flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center transition ${dragOver ? 'border-accent bg-accentSoft' : 'border-line2 bg-surface'}`}
+            className={`flex min-h-[200px] flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center transition-all duration-150 ${dragOver ? 'scale-[1.01] border-accent bg-accentSoft' : 'border-line2 bg-surface'}`}
           >
             <input ref={fileRef} type="file" accept="application/pdf,image/png,image/jpeg" multiple className="hidden" onChange={(e) => addFiles(e.target.files)} />
             <DocIcon />
@@ -50,7 +50,7 @@ export default function Assess({ meta, onRun, error }: { meta: Meta | null; onRu
           {f.files.length > 0 && (
             <ul className="mt-4 divide-y divide-line border-t border-line">
               {f.files.map((file, i) => (
-                <li key={i} className="flex items-center justify-between py-3 text-sm">
+                <li key={i} className="fadeup flex items-center justify-between py-3 text-sm">
                   <span className="truncate text-ink">{file.name}</span>
                   <span className="flex items-center gap-4 text-ink3">
                     <span className="tabular-nums">{(file.size / 1024).toFixed(0)} KB</span>
@@ -66,7 +66,7 @@ export default function Assess({ meta, onRun, error }: { meta: Meta | null; onRu
       )}
 
       {step === 1 && (
-        <div className="fade space-y-8">
+        <div className="fadeup space-y-8">
           <H t="Project details" s="Basic information used alongside the extracted plan parameters." />
           <Group title="Project">
             <div className="grid gap-5 sm:grid-cols-2">
@@ -93,7 +93,7 @@ export default function Assess({ meta, onRun, error }: { meta: Meta | null; onRu
       )}
 
       {step === 2 && (
-        <div className="fade">
+        <div className="fadeup">
           <H t="Jurisdiction" s="Regulations are jurisdiction-dependent. The rule set and version below determine every threshold applied." />
           <ol className="space-y-0 border-t border-line">
             <Hier label="State / Region" value={<select className="field max-w-xs" defaultValue="sample"><option value="sample">Sample State</option></select>} />
@@ -110,7 +110,7 @@ export default function Assess({ meta, onRun, error }: { meta: Meta | null; onRu
       )}
 
       {step === 3 && (
-        <div className="fade">
+        <div className="fadeup">
           <H t="Review" s="Confirm before the deterministic engine evaluates your submission." />
           <dl className="divide-y divide-line border-y border-line">
             <Row k="Documents" v={f.files.map((x) => x.name).join(', ') || '—'} />

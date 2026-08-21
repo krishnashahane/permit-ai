@@ -42,7 +42,7 @@ export default function ViolationCard({
           </dl>
 
           {open && (
-            <div className="space-y-6 border-t border-line px-5 py-5">
+            <div className="expandin space-y-6 border-t border-line px-5 py-5">
               <DecisionChain check={check} />
 
               <div>

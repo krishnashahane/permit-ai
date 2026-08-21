@@ -32,7 +32,7 @@ export default function Result({
   };
 
   return (
-    <div className="space-y-16">
+    <div className="stagger space-y-16">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-meta uppercase tracking-wide text-ink3">Compliance assessment</p>
