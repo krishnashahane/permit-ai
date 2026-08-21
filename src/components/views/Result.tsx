@@ -7,7 +7,7 @@ import ExtractedParams from '@/components/parts/ExtractedParams';
 import ViolationCard from '@/components/parts/ViolationCard';
 import RegulationsUsed from '@/components/parts/RegulationsUsed';
 import PlanPreview from '@/components/parts/PlanPreview';
-import { SectionHeading } from '@/components/shared';
+import { SectionHeading, DecisionBanner, AgentTrace } from '@/components/shared';
 
 export type VerdictResp = Verdict & {
   meta: { role: string; ownerMasked: string; addressMasked: string; piiEncryptedAtRest: boolean };
@@ -48,6 +48,8 @@ export default function Result({
           <button onClick={onNew} className="btn btn-primary px-3.5 py-2">New assessment</button>
         </div>
       </div>
+
+      {verdict.agent && <DecisionBanner verdict={verdict} />}
 
       <ComplianceOverview verdict={verdict} />
 
@@ -104,6 +106,14 @@ export default function Result({
           <div><SectionHeading title="Audit trail" description="Append-only, hash-chained — tamper-evident" /><AuditPanel verdict={verdict} /></div>
         </div>
       </div>
+
+      {verdict.agent && (
+        <div>
+          <hr className="divider mb-12" />
+          <SectionHeading title="How the agent decided" description="Each tool the agent ran, in order — the decision is made by the deterministic rule engine" />
+          <AgentTrace agent={verdict.agent} />
+        </div>
+      )}
     </div>
   );
 }

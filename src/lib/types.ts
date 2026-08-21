@@ -98,9 +98,22 @@ export interface VerdictSummary {
   total: number;
 }
 
+export interface AgentStep {
+  tool: string;                   // e.g. "classify", "extract", "evaluate"
+  label: string;                  // human-readable
+  status: 'ok' | 'refused' | 'skipped';
+  detail?: string;
+}
+export interface AgentRun {
+  decision: 'APPROVE' | 'REJECT'; // the yes/no pre-check decision
+  corrections: number;            // required corrections when rejected
+  steps: AgentStep[];             // ordered tool trace
+}
+
 export interface Verdict {
   submissionId: string;
   assessmentId: string;           // human-facing PA-2026-XXXXX
+  agent?: AgentRun;               // agent decision + tool trace
   jurisdiction: string;
   jurisdictionVersion: string;
   verdict: 'PASS' | 'FAIL';

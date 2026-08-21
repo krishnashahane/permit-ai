@@ -9,6 +9,7 @@ import { resolveRole } from '@/lib/auth/rbac';
 import { appendAudit } from '@/lib/audit/log';
 import { encryptPII, maskPII } from '@/lib/security/pii';
 import { sanitizeDocumentText } from '@/lib/extract/sanitize';
+import { buildAgentRun } from '@/lib/agent/orchestrator';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -31,6 +32,7 @@ export async function POST(req: Request) {
     let owner = '';
     let address = '';
     let facts;
+    let uploadedDocCount = 0;
 
     if (ct.includes('application/json')) {
       const body = await req.json();
@@ -76,6 +78,7 @@ export async function POST(req: Request) {
       const totalBytes = files.reduce((n, f) => n + f.size, 0);
       if (totalBytes > 60 * 1024 * 1024) return NextResponse.json({ error: 'Upload too large (60 MB total maximum).' }, { status: 413 });
       if (files.length === 0) return NextResponse.json({ error: 'No document uploaded.' }, { status: 400 });
+      uploadedDocCount = files.length;
       const docs: DocInput[] = [];
       for (const file of files) {
         const bytes = new Uint8Array(await file.arrayBuffer());
@@ -112,6 +115,19 @@ export async function POST(req: Request) {
     const encAddress = address ? encryptPII(address) : null;
 
     const verdict = runRulesEngine(facts, jurisdiction, submissionId);
+
+    // Attach the agent decision + tool trace. The decision mirrors the
+    // deterministic verdict (engine decides, agent orchestrates & explains).
+    const regulationCount = new Set(verdict.checks.map((c) => c.codeSection)).size;
+    const missingCount = facts._missing?.length ?? 0;
+    verdict.agent = buildAgentRun(verdict, facts, {
+      source: facts._source === 'vision' ? 'upload' : facts._source === 'sample' ? 'sample' : 'manual',
+      documentCount: uploadedDocCount,
+      documentType: facts._documentType,
+      extractedCount: 11 - missingCount,
+      missingCount,
+      regulationCount,
+    });
 
     // Immutable audit entry: verdict + every extracted fact + PII masked.
     appendAudit(role, 'ANALYZE', submissionId, {

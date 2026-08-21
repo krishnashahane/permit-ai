@@ -9,12 +9,15 @@ export default function Home({ meta, onStart, onSample }: { meta: Meta | null; o
       {/* Hero */}
       <section className="fadeup grid items-center gap-14 py-8 lg:grid-cols-[1.05fr_1fr] lg:py-16">
         <div>
-          <p className="text-sm font-medium text-ink2">Preliminary building compliance</p>
-          <h1 className="mt-4 text-hero font-semibold text-ink">Know what will fail before you submit.</h1>
+          <p className="inline-flex items-center gap-2 text-sm font-medium text-ink2">
+            <span className="h-1.5 w-1.5 rounded-full bg-accent" /> AI building-permit compliance agent
+          </p>
+          <h1 className="mt-4 text-hero font-semibold text-ink">Approve or reject, in seconds.</h1>
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-ink2">
-            Upload building plans. PermitAI extracts the relevant project information,
-            evaluates jurisdiction-specific rules, and explains potential compliance
-            issues — each tied to its regulatory basis — before you submit.
+            PermitAI is an AI agent that reads a building permit application, checks it against
+            the applicable codes, and returns a yes/no decision in seconds. If it’s rejected, the
+            agent pinpoints every violation and the exact correction — so you can fix and resubmit
+            right away.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <button onClick={onStart} className="btn btn-primary px-5 py-3 text-base">Start an assessment</button>
@@ -32,9 +35,9 @@ export default function Home({ meta, onStart, onSample }: { meta: Meta | null; o
             { n: '01', t: 'Upload plans', d: 'Submit building drawings and project details. Files are validated and scanned server-side.' },
             { n: '02', t: 'Extract project data', d: 'Setbacks, height, floor-area ratio, parking and more are read into structured parameters.' },
             { n: '03', t: 'Evaluate regulations', d: 'A deterministic engine checks each value against the jurisdiction’s rule set.' },
-            { n: '04', t: 'Generate report', d: 'Every pass or fail is explained with its exact code section and a suggested correction.' },
-          ].map((s) => (
-            <div key={s.n}>
+            { n: '04', t: 'Decide & correct', d: 'A yes/no decision in seconds; if rejected, every violation and its fix, ready to resubmit.' },
+          ].map((s, i) => (
+            <div key={s.n} className="fadeup" style={{ animationDelay: `${i * 80}ms` }}>
               <div className="text-sm font-medium tabular-nums text-accent">{s.n}</div>
               <h3 className="mt-2 text-lg font-semibold text-ink">{s.t}</h3>
               <p className="mt-1.5 text-sm leading-relaxed text-ink2">{s.d}</p>

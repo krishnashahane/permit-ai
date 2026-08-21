@@ -1,0 +1,9 @@
+
+> permit-ai@1.0.0 start
+> next start
+
+▲ Next.js 16.3.1
+- Local:         http://localhost:3148
+- Network:       http://192.168.1.35:3148
+✓ Ready in 184ms
+✓ Running next.config.mjs took 8ms

@@ -22,7 +22,7 @@ export default function Pipeline({ done, project }: { done: boolean; project: st
 
   return (
     <div className="mx-auto max-w-lg py-16">
-      <h1 className="text-2xl font-semibold text-ink">Analyzing your project</h1>
+      <h1 className="text-2xl font-semibold text-ink">The agent is reviewing your application</h1>
       <p className="mt-2 text-base text-ink2">{project}</p>
 
       <ol className="mt-10 space-y-0 border-t border-line" aria-live="polite">

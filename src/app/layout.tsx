@@ -2,9 +2,9 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Permit AI — Building Permit Pre-Check',
+  title: 'PermitAI — AI building-permit compliance agent',
   description:
-    'Advisory AI pre-check for building permit applications. Instant PASS/FAIL with exact code violations and grounded citations. Not a permit authority.',
+    'An AI agent that checks building permit applications against the applicable codes and returns a yes/no decision in seconds — with the exact violations and corrections needed to resubmit. Advisory only; not a permit authority.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
