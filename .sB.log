@@ -1,0 +1,12 @@
+
+> permit-ai@1.0.0 start
+> next start
+
+▲ Next.js 16.3.1
+- Local:         http://localhost:3150
+- Network:       http://192.168.1.35:3150
+✓ Ready in 151ms
+✓ Running next.config.mjs took 9ms
+[permit-ai] LLM complete failed: Unable to process input image. Please retry or report in https://developers.generativeai.google/guide/troubleshooting
+[permit-ai] LLM complete failed: Unable to process input image. Please retry or report in https://developers.generativeai.google/guide/troubleshooting
+[permit-ai] LLM complete failed: Unable to process input image. Please retry or report in https://developers.generativeai.google/guide/troubleshooting

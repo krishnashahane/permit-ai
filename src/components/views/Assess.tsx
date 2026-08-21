@@ -1,5 +1,5 @@
 'use client';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface Meta { jurisdictions: { id: string; name: string; zones: string[] }[]; }
 export interface AssessForm {
@@ -16,6 +16,9 @@ export default function Assess({ meta, onRun, error }: { meta: Meta | null; onRu
   });
   const [dragOver, setDragOver] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  // A refused/failed analysis (e.g. non-building document) sends the user back
+  // to the Documents step so they can add the right file.
+  useEffect(() => { if (error) setStep(0); }, [error]);
   const set = (k: keyof AssessForm, v: unknown) => setF((p) => ({ ...p, [k]: v }));
   const addFiles = (l: FileList | null) => l && setF((p) => ({ ...p, files: [...p.files, ...Array.from(l)].slice(0, 5) }));
   const canNext = step === 0 ? f.files.length > 0 : true;
@@ -23,6 +26,15 @@ export default function Assess({ meta, onRun, error }: { meta: Meta | null; onRu
 
   return (
     <div className="mx-auto max-w-2xl py-4">
+      {error && (
+        <div className="fadeup mb-6 flex items-start gap-3 rounded-lg border border-danger/30 bg-dangerSoft px-4 py-3.5" role="alert">
+          <svg className="mt-0.5 shrink-0" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8443a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" /></svg>
+          <div>
+            <p className="text-sm font-medium text-danger">Couldn’t analyze this upload</p>
+            <p className="mt-0.5 text-sm text-ink2">{error}</p>
+          </div>
+        </div>
+      )}
       {/* Thin progress */}
       <div className="mb-10">
         <div className="flex items-center justify-between">
@@ -121,16 +133,18 @@ export default function Assess({ meta, onRun, error }: { meta: Meta | null; onRu
             <Row k="Jurisdiction" v={jur?.name || f.jurisdiction} />
           </dl>
           <p className="mt-5 text-sm text-ink2">This produces an advisory preliminary assessment. It does not replace approval by the Authority Having Jurisdiction.</p>
-          {error && <p className="mt-4 rounded-md bg-dangerSoft px-4 py-3 text-sm text-danger">{error}</p>}
         </div>
       )}
 
       <div className="mt-10 flex items-center justify-between">
         <button onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0} className="btn btn-text px-2 py-2 disabled:opacity-0">← Back</button>
         {step < STEPS.length - 1
-          ? <button onClick={() => setStep((s) => s + 1)} disabled={!canNext} className="btn btn-primary px-5 py-2.5">Continue</button>
+          ? <button onClick={() => setStep((s) => s + 1)} disabled={!canNext} title={!canNext ? 'Add a building permit document to continue' : undefined} className="btn btn-primary px-5 py-2.5">Continue</button>
           : <button onClick={() => onRun(f)} className="btn btn-primary px-5 py-2.5">Run preliminary assessment</button>}
       </div>
+      {step === 0 && f.files.length === 0 && (
+        <p className="mt-3 text-right text-meta text-ink3">Add at least one building permit document to continue.</p>
+      )}
     </div>
   );
 }

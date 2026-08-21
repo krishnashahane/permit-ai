@@ -114,10 +114,10 @@ export default function PermitApp() {
     <div className="min-h-screen bg-bg">
       <TopBar meta={meta} role={role} assumeRole={assumeRole} view={view} setView={setView} hasResult={!!verdict} />
       <main className="mx-auto max-w-content px-6 py-10 sm:px-8">
-        {view === 'home' && <Home meta={meta} onStart={() => setView('assess')} onSample={analyzeSample} />}
+        {view === 'home' && <Home meta={meta} onStart={() => { setError(''); setView('assess'); }} onSample={analyzeSample} />}
         {view === 'assess' && <Assess meta={meta} onRun={analyzeUpload} error={error} />}
         {view === 'pipeline' && <Pipeline done={scanDone} project={pipelineProject} />}
-        {view === 'result' && verdict && <Result verdict={verdict} prevScore={prevScore} reasoned={reasoned} reasoning={reasoning} role={role} jurisdictionId={jurisdiction} onReRun={reRun} onExport={exportPdf} onNew={() => setView('assess')} />}
+        {view === 'result' && verdict && <Result verdict={verdict} prevScore={prevScore} reasoned={reasoned} reasoning={reasoning} role={role} jurisdictionId={jurisdiction} onReRun={reRun} onExport={exportPdf} onNew={() => { setError(''); setView('assess'); }} />}
         {view === 'result' && !verdict && <Empty onStart={() => setView('assess')} onSample={() => analyzeSample('six-violations')} />}
         {view === 'authority' && <Authority history={history} onOpen={(i) => { setVerdict(history[i].verdict as VerdictResp); setView('result'); }} />}
       </main>

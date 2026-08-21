@@ -98,7 +98,7 @@ export async function analyzeDocuments(projectDescription: string, docs: DocInpu
       ],
       { maxTokens: 900 },
     );
-    if (!text) return { ok: false, code: 'extraction_failed', message: 'The extractor returned no result. Please try again.' };
+    if (!text) return { ok: false, code: 'extraction_failed', message: 'This upload could not be read as a building permit document. Please add a clear building permit plan (architectural or site drawing) as PDF, PNG, or JPG — or try a sample project.' };
     const json = JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1));
     parsed = ExtractSchema.parse(json);
   } catch (err) {
@@ -110,7 +110,7 @@ export async function analyzeDocuments(projectDescription: string, docs: DocInpu
     return {
       ok: false, code: 'not_building_document',
       documentType: parsed.documentType || 'unrecognized',
-      message: `This does not appear to be a building permit document (detected: ${parsed.documentType || 'unrecognized'}). Upload architectural or site plans, or try a sample project.`,
+      message: `Please add building permit documents only — architectural drawings, site plans, or permit application sheets. This upload looked like: ${parsed.documentType || 'an unrelated document'}. You can also try a sample project.`,
     };
   }
 
@@ -124,8 +124,8 @@ export async function analyzeDocuments(projectDescription: string, docs: DocInpu
       found: [...(parsed.zoneType ? ['zoneType'] : []), ...present],
       missing: [...(parsed.zoneType ? [] : ['zoneType']), ...missing],
       message: !parsed.zoneType
-        ? 'The zoning district could not be read from the plans, so dimensional rules cannot be evaluated. Provide a plan sheet that states the zoning district.'
-        : `Too few compliance parameters could be read from the plans (${present.length} found). Provide clearer site/architectural sheets showing setbacks, height, and floor area.`,
+        ? 'This looks like a building document, but the zoning district could not be read, so the rules cannot be evaluated. Please add a permit plan sheet that states the zoning district.'
+        : `This looks like a building document, but too few compliance parameters could be read (${present.length} found). Please add clearer building permit site/architectural sheets showing setbacks, height, and floor area.`,
     };
   }
 
