@@ -3,6 +3,7 @@ import { ADVISORY_DISCLAIMER } from '@/lib/rules/engine';
 import { appendAudit } from '@/lib/audit/log';
 import { resolveRole } from '@/lib/auth/rbac';
 import type { Verdict } from '@/lib/types';
+import { verifyAssessmentSignature } from '@/lib/security/assessment-signature';
 
 export const runtime = 'nodejs';
 
@@ -11,7 +12,16 @@ export const runtime = 'nodejs';
 // it is explicitly NOT an official permit approval.
 export async function POST(req: Request) {
   const role = resolveRole(req);
-  const v = (await req.json()) as Verdict & { meta?: { addressMasked?: string; ownerMasked?: string } };
+  const body = await req.json().catch(() => null);
+  if (!body || typeof body !== 'object') {
+    return NextResponse.json({ error: 'Invalid assessment payload.' }, { status: 400 });
+  }
+  const signature = typeof body.assessmentSignature === 'string' ? body.assessmentSignature : '';
+  const { assessmentSignature: _ignored, ...unsignedVerdict } = body as Record<string, unknown>;
+  if (!signature || !verifyAssessmentSignature(JSON.stringify(unsignedVerdict), signature)) {
+    return NextResponse.json({ error: 'Invalid or modified assessment.' }, { status: 400 });
+  }
+  const v = unsignedVerdict as Verdict & { meta?: { addressMasked?: string; ownerMasked?: string } };
 
   const pdf = await PDFDocument.create();
   const font = await pdf.embedFont(StandardFonts.Helvetica);
