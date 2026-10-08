@@ -142,11 +142,8 @@ export async function POST(req: Request) {
       piiEncrypted: Boolean(encOwner && encAddress),
     });
 
-    const assessmentSignature = signAssessment(JSON.stringify(verdict));
-
-    return NextResponse.json({
+    const result = {
       ...verdict,
-      assessmentSignature,
       meta: {
         role,
         ownerMasked: maskPII(owner),
@@ -154,6 +151,12 @@ export async function POST(req: Request) {
         piiEncryptedAtRest: Boolean(encOwner || encAddress),
         description: projectDescription,
       },
+    };
+    const assessmentSignature = signAssessment(JSON.stringify(result));
+
+    return NextResponse.json({
+      ...result,
+      assessmentSignature,
     });
   } catch (err) {
     return NextResponse.json({ error: (err as Error).message || 'Analysis failed.' }, { status: 500 });
