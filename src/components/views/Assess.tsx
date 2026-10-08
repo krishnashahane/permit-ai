@@ -48,7 +48,7 @@ export default function Assess({ meta, onRun, error }: { meta: Meta | null; onRu
 
       {step === 0 && (
         <div className="fadeup">
-          <H t="Upload building plans" s="PDF, PNG or JPG, up to 25 MB each. Files are validated and malware-scanned server-side before parsing." />
+          <H t="Upload building plans" s="PDF, PNG or JPG, up to 3 MiB total per assessment. Files are validated and malware-scanned server-side before parsing." />
           <div
             onDragOver={(e) => { e.preventDefault(); setDragOver(true); }} onDragLeave={() => setDragOver(false)}
             onDrop={(e) => { e.preventDefault(); setDragOver(false); addFiles(e.dataTransfer.files); }}
@@ -57,7 +57,7 @@ export default function Assess({ meta, onRun, error }: { meta: Meta | null; onRu
             <input ref={fileRef} type="file" accept="application/pdf,image/png,image/jpeg" multiple className="hidden" onChange={(e) => addFiles(e.target.files)} />
             <DocIcon />
             <p className="mt-3 text-base text-ink">Drag plan sheets here, or <button onClick={() => fileRef.current?.click()} className="btn-text">choose files</button></p>
-            <p className="mt-1 text-sm text-ink3">Maximum 5 files · 25 MB each</p>
+            <p className="mt-1 text-sm text-ink3">Maximum 5 files · 3 MiB total</p>
           </div>
           {f.files.length > 0 && (
             <ul className="mt-4 divide-y divide-line border-t border-line">
