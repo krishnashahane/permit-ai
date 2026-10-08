@@ -76,7 +76,7 @@ export async function POST(req: Request) {
       // passed to extraction as base64, so path traversal is not reachable.
       if (files.length > 5) return NextResponse.json({ error: 'Too many files (maximum 5).' }, { status: 400 });
       const totalBytes = files.reduce((n, f) => n + f.size, 0);
-      if (totalBytes > 60 * 1024 * 1024) return NextResponse.json({ error: 'Upload too large (60 MB total maximum).' }, { status: 413 });
+      if (totalBytes > 3 * 1024 * 1024) return NextResponse.json({ error: 'Upload too large (3 MiB total maximum).' }, { status: 413 });
       if (files.length === 0) return NextResponse.json({ error: 'No document uploaded.' }, { status: 400 });
       uploadedDocCount = files.length;
       const docs: DocInput[] = [];
