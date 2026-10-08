@@ -10,6 +10,7 @@ import { appendAudit } from '@/lib/audit/log';
 import { encryptPII, maskPII } from '@/lib/security/pii';
 import { sanitizeDocumentText } from '@/lib/extract/sanitize';
 import { buildAgentRun } from '@/lib/agent/orchestrator';
+import { signAssessment } from '@/lib/security/assessment-signature';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -141,8 +142,11 @@ export async function POST(req: Request) {
       piiEncrypted: Boolean(encOwner && encAddress),
     });
 
+    const assessmentSignature = signAssessment(JSON.stringify(verdict));
+
     return NextResponse.json({
       ...verdict,
+      assessmentSignature,
       meta: {
         role,
         ownerMasked: maskPII(owner),
