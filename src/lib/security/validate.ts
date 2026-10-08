@@ -1,4 +1,4 @@
-// File-type / size validation + a mock virus scan gate. Real deployments would
+// File-type / size validation + an EICAR test gate. Real deployments would
 // wire the scan to ClamAV / a cloud AV API before any parsing happens.
 
 export const MAX_FILE_BYTES = 3 * 1024 * 1024; // 3 MiB: keeps multipart requests below Vercel's 4.5 MB function limit
