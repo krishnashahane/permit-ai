@@ -54,8 +54,8 @@ export function validateUpload(
 }
 
 /**
- * Mock virus scan. Returns a promise so the call site awaits it exactly as it
- * would a real AV service. Flags the classic EICAR test string.
+ * Development malware-test gate. It detects the standard EICAR test string;
+ * replace this function with a real antivirus service before treating it as AV scanning.
  */
 export async function scanForMalware(bytes: Uint8Array): Promise<ValidationResult> {
   const head = new TextDecoder('latin1').decode(bytes.slice(0, 4096));
