@@ -12,7 +12,12 @@ export const SESSION_COOKIE = 'permit_session';
 const TTL_SECONDS = 8 * 60 * 60; // 8h
 
 function secret(): string {
-  return process.env.AUTH_SECRET || 'permit-ai-dev-secret-change-me';
+  const configured = process.env.AUTH_SECRET?.trim();
+  if (configured) return configured;
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('AUTH_SECRET must be set in production.');
+  }
+  return 'permit-ai-local-dev-secret';
 }
 
 function b64url(b: Buffer): string {
@@ -61,9 +66,9 @@ export function readCookie(req: Request, name: string): string | null {
 /** Constant-time access-code check for a privileged role. */
 export function accessCodeValid(role: Role, code: string): boolean {
   const expected =
-    role === 'official' ? (process.env.OFFICIAL_ACCESS_CODE || 'demo-official')
-    : role === 'architect' ? (process.env.ARCHITECT_ACCESS_CODE || 'demo-architect')
-    : '';
+    role === 'official' ? process.env.OFFICIAL_ACCESS_CODE
+    : role === 'architect' ? process.env.ARCHITECT_ACCESS_CODE
+    : undefined;
   if (!expected) return false;
   const a = Buffer.from(String(code));
   const b = Buffer.from(expected);
