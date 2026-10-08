@@ -1,96 +1,158 @@
 # Permit AI
 
-**An advisory AI pre-check for building permit applications.** Upload plan sheets
-(PDF/PNG/JPG), pick a jurisdiction, and get a **PASS / FAIL verdict with a 0–100
-readiness score in seconds** — plus the exact code sections you're violating, the
-measured-vs-required numbers, a plain-English fix, and estimated cost/time impact.
+Permit AI is an advisory building-permit pre-check application. It accepts building plan sheets (PDF/PNG/JPG), evaluates a deterministic jurisdiction ruleset, and can optionally use an LLM to extract plan facts and provide citation-grounded explanations.
 
-> **Advisory only.** Permit AI is a preliminary self-assessment. It is **not** the
-> final permit authority, it never submits anything to a municipal system, and it
-> makes no auto-actions. Only the authority having jurisdiction (AHJ) can approve a
-> permit. This disclaimer appears in the UI and is stamped into every PDF export.
+> Not a permit, approval, or legal determination. The Authority Having Jurisdiction (AHJ) is the final decision-maker. Permit AI never submits applications to a municipal system.
 
-## Two-tier speed architecture
+## Architecture
 
-1. **Fast path (< 10s, deterministic).** Validate & virus-scan the upload →
-   sanitize document text (prompt-injection defense) → extract structured facts
-   with Claude vision → run a **pure, deterministic rules engine** of numeric
-   thresholds per jurisdiction → return an instant verdict. The judging math has
-   no LLM in the loop.
-2. **RAG reasoning path (parallel, streamed).** For each violation and each
-   qualitative item, retrieve governing code sections and have Claude write a
-   justification **grounded only in retrieved chunks**, streamed in over SSE. It
-   enriches the verdict but **never blocks** the 10-second response.
+Permit AI has two paths:
 
-See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the diagram.
+1. **Deterministic assessment** — validated inputs are passed to a pure rules engine. The readiness score and numeric compliance checks do not depend on an LLM.
+2. **Optional AI reasoning/extraction** — Gemini or an AI Gateway model can extract facts from uploaded plans and explain violations using the embedded regulatory corpus. AI output never changes the deterministic rule decision.
 
 ## Quick start
 
+Requirements:
+
+- Node.js 20.9+
+- npm
+
+Install dependencies:
+
 ```bash
 npm install
-npm run test      # rules-engine contract tests (4 pass, no deps)
-npm run dev       # http://localhost:3000
 ```
 
-Runs fully in **demo mode with zero configuration** (deterministic extraction +
-templated, still-grounded citations). Add a key to light up real Claude vision +
-RAG:
+Run the tests:
+
+```bash
+npm test
+```
+
+Start development:
+
+```bash
+npm run dev
+```
+
+Open `http://localhost:3000`.
+
+Production:
+
+```bash
+npm run build
+npm start
+```
+
+Next.js 16.4.0 is the current stable release and the project is on the supported 16.x Active LTS line.
+
+## Demo mode
+
+The seeded sample projects work without an AI key:
+
+- `clean-pass` — zero deterministic violations.
+- `six-violations` — six deterministic violations.
+- `edge-case` — values exactly on deterministic thresholds.
+
+Uploaded documents are different: real plan extraction requires a configured multimodal model such as Gemini.
+
+## Environment
+
+Copy the template:
 
 ```bash
 cp .env.example .env.local
-# set AI_GATEWAY_API_KEY (preferred on Vercel) or ANTHROPIC_API_KEY
 ```
 
-## Try it
+For production, configure at least:
 
-- **Seeded examples** (buttons on the landing page, no upload needed):
-  - `clean-pass` → **READY TO SUBMIT** (0 violations)
-  - `six-violations` → **NOT YET** with **exactly 6** ranked violation cards
-  - `edge-case` → every dimension exactly on the code limit; numeric checks pass
-    at the boundary and the decision shifts to the qualitative reasoning layer
-- **Role switcher** (top-right): `applicant` / `architect` / `official` change what
-  is visible (raw extracted facts and the audit trail are gated to non-applicants).
-- **Ask why** on any card → grounded chat that refuses to answer without a citation.
-- **Export fix report (PDF)** → hand-off document for the architect, disclaimer stamped in.
+```env
+AUTH_SECRET=<long-random-secret>
+ARCHITECT_ACCESS_CODE=<strong-secret>
+OFFICIAL_ACCESS_CODE=<strong-secret>
+PII_ENCRYPTION_KEY=<32-byte-base64-key>
+```
 
-## Security & trust
+Add `GEMINI_API_KEY` when real plan extraction and AI reasoning are required.
 
-| Control | Implementation |
-|---|---|
-| Advisory-only, no auto-submit | UI banner + PDF stamp; no municipal-system integration exists |
-| RBAC | `src/lib/auth/rbac.ts` — capability matrix per role |
-| Immutable audit trail | `src/lib/audit/log.ts` — append-only, SHA-256 hash-chained, tamper-detectable |
-| PII at rest | `src/lib/security/pii.ts` — AES-256-GCM; masked in logs; never sent to analytics or used for training |
-| Prompt-injection defense | `src/lib/extract/sanitize.ts` — strips instruction-like text, wraps plan text as untrusted data |
-| Upload safety | `src/lib/security/validate.ts` — magic-number sniff + size cap + mock virus (EICAR) gate |
-| Rate limiting | `src/lib/security/ratelimit.ts` — per-IP fixed window (Redis-shaped) |
-| Grounded citations | retrieval allow-set; no citation → claim dropped; chat refuses ungrounded |
-| Security headers | strict CSP, HSTS, nosniff, frame-deny in `next.config.mjs` |
+The privileged architect/official roles do not have built-in demo passwords. They fail closed when their access codes are unset.
 
-## Deliverables map
+## Upload limits
 
-- Rules engine + jurisdiction table → `src/lib/rules/`
-- RAG corpus + retrieval + grounded reasoning → `src/lib/rag/`
-- Seed jurisdiction (City of Springfield) → `src/lib/rules/jurisdictions/springfield.json`
-- 3 example submissions → `src/seed/submissions/`
-- API (fast path, reasoning SSE, grounded chat, PDF, audit, meta) → `src/app/api/`
-- UI (intake, scanning animation, verdict, violation cards, ask-why, diff) → `src/components/`
+The upload endpoint accepts up to five PDF/PNG/JPG files, but the total request is capped at 3 MiB. This stays below Vercel's documented 4.5 MB serverless request-body limit.
 
-## Production swap-in
+Each file is magic-number validated, checked against its declared MIME type, rejected if it matches known executable/archive signatures, and scanned for the EICAR test signature before model processing.
 
-Every external seam is behind a small interface, so moving from the in-process
-demo to managed services is mechanical:
+For larger plan sets, split the sheets into multiple assessments or deploy behind infrastructure that supports larger request bodies.
 
-| Demo (in-process) | Production |
-|---|---|
-| Lexical retrieval over corpus array | Postgres + **pgvector** cosine search |
-| In-memory rate-limit / cache | **Redis** (Upstash on Vercel Marketplace) |
-| In-memory hash-chained audit array | Append-only Postgres table (no UPDATE/DELETE grant) |
-| AES-GCM in `pii.ts` | **pgcrypto** columns / KMS |
-| Next.js Route Handlers | Same handlers, or lift to standalone **FastAPI** (contract is 1:1) |
+## Security controls
 
-## Deploy
+- Production requires an explicit `AUTH_SECRET`.
+- Privileged role access codes have no insecure defaults.
+- Role sessions are HMAC-signed, `HttpOnly`, `SameSite=Strict`, and expire after 8 hours.
+- Rate limiting does not trust `X-Forwarded-For` / `X-Real-IP` unless `TRUST_PROXY=true`.
+- PII encryption fails closed in production if `PII_ENCRYPTION_KEY` is missing.
+- Uploaded files are validated by content signature, not only browser-provided MIME type.
+- Prompt-injection patterns are stripped from untrusted document text before LLM context construction.
+- Assessment PDF exports are HMAC-verified so a client cannot modify a verdict and export it as if it came from the rules engine.
+- Security response headers and HSTS are enabled for production.
+- Committed build/server log artifacts were removed.
 
-Single Vercel project (frontend + API in one Next.js app). Push to a Git repo,
-import to Vercel, add `AI_GATEWAY_API_KEY` (optional — demo mode works without),
-deploy. Node runtime / Fluid Compute; SSE streaming works with zero config.
+## API
+
+The Next.js route handlers include:
+
+```text
+POST /api/analyze
+POST /api/reason
+POST /api/chat
+POST /api/report
+POST /api/session
+GET  /api/session
+DELETE /api/session
+GET  /api/audit
+GET  /api/meta
+GET  /api/regulations
+```
+
+The application is designed for a single Next.js deployment, including Vercel.
+
+## Testing
+
+The test command uses `tsx` so the TypeScript routing test executes correctly:
+
+```bash
+npm test
+```
+
+The test suite covers the deterministic rules contract and permit-topic query routing.
+
+## Project structure
+
+```text
+permit-ai/
+├── src/app/             # Next.js pages and route handlers
+├── src/components/      # Assessment UI and result/report UX
+├── src/lib/rules/       # Deterministic jurisdiction rules
+├── src/lib/rag/         # Regulatory corpus and grounded retrieval
+├── src/lib/extract/     # Document sanitization and vision extraction
+├── src/lib/security/    # Upload, PII, rate-limit, and signing controls
+├── src/lib/auth/        # HMAC role sessions and RBAC
+├── src/seed/            # Deterministic sample submissions
+├── tests/               # Rules and router tests
+├── ARCHITECTURE.md
+├── next.config.mjs
+├── package.json
+└── README.md
+```
+
+## Important production notes
+
+The audit log and rate limiter are process-local. They are suitable for the demo and single-instance development, but they are not durable distributed infrastructure. A multi-instance deployment should replace them with durable storage and a shared rate limiter.
+
+There is no persistent database in this repository. PII is encrypted while handled by the application, but it is not being written to a durable encrypted database here.
+
+## License
+
+MIT
