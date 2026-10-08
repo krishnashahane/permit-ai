@@ -1,8 +1,7 @@
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'crypto';
 
-// PII (owner name, address) is encrypted at rest with AES-256-GCM. In this demo
-// the ciphertext is held in memory; in production these are pgcrypto/KMS-managed
-// columns. PII is NEVER sent to analytics and NEVER used to train any model.
+// PII (owner name, address) is encrypted in process with AES-256-GCM. This demo
+// does not persist the ciphertext to a database. PII is never sent to analytics or used to train a model.
 
 function key(): Buffer {
   const raw = process.env.PII_ENCRYPTION_KEY;
