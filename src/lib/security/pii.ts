@@ -12,8 +12,11 @@ function key(): Buffer {
       if (b.length === 32) return b;
     } catch { /* fall through */ }
   }
-  // Deterministic dev key so the demo runs without configuration. NOT for prod.
-  return scryptSync('permit-ai-dev-key', 'permit-ai-salt', 32);
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('PII_ENCRYPTION_KEY must be configured in production.');
+  }
+  // Ephemeral development key. It is intentionally regenerated per process.
+  return scryptSync('permit-ai-local-dev-key', 'permit-ai-local-dev-salt', 32);
 }
 
 export interface Encrypted {
