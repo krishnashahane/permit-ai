@@ -30,6 +30,11 @@ export function rateLimit(key: string): RateResult {
 }
 
 export function clientKey(req: Request): string {
-  const fwd = req.headers.get('x-forwarded-for');
-  return (fwd?.split(',')[0].trim() || req.headers.get('x-real-ip') || 'local').slice(0, 64);
+  if (process.env.TRUST_PROXY === 'true') {
+    const fwd = req.headers.get('x-forwarded-for');
+    const real = req.headers.get('x-real-ip');
+    const candidate = fwd?.split(',')[0].trim() || real?.trim();
+    if (candidate) return candidate.slice(0, 64);
+  }
+  return 'local';
 }
