@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server';
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'pdf-lib';
 import { ADVISORY_DISCLAIMER } from '@/lib/rules/engine';
 import { appendAudit } from '@/lib/audit/log';
