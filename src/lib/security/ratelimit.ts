@@ -1,6 +1,5 @@
-// In-memory fixed-window rate limiter. In production this is backed by Redis
-// (the same fast-path cache used for rules lookups); the interface is identical
-// so swapping the store is a one-line change.
+// In-memory fixed-window limiter for single-process deployments. Multi-instance
+// production deployments should replace this store with shared Redis/edge limits.
 
 const WINDOW_MS = 60_000;
 const buckets = new Map<string, { count: number; resetAt: number }>();
